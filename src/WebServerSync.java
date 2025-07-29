@@ -167,68 +167,61 @@ public class WebServerSync {
 
     private void handleParamsRequest(String sParams, PrintWriter out) throws IOException {
 
+        JSONObject params;
+
         try {
-            JSONObject params = new JSONObject(sParams);
+            params = new JSONObject(sParams);
 
             System.out.println(params);
-
-            if (params.keySet().contains("action")) {
-                if (core.req_exists("req_"+params.get("action").toString().toLowerCase())) {
-//                    System.out.println("Action: "+params.get("action").toString().toLowerCase()+" exists");
-                    Integer usessid = core.addNewUserSession();
-                    if (usessid >= 0) {
-                        JSONObject jResp = new JSONObject();
-                        jResp.put("error", false);
-                        jResp.put("action", params.get("action").toString().toLowerCase());
-                        jResp.put("usessid", usessid);
-                        String content = jResp.toString();
-                        out.println("HTTP/1.1 200 OK");
-                        out.println("Content-Type: text/html");
-                        out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
-                        out.println("pragma: no-cache");
-                        out.println("Content-length: " + content.length());
-                        out.println();
-                        out.print(content);
-                        out.println();
-                    }else {
-                        out.println("HTTP/1.1 500 Internal server error");
-                        out.println("Content-Type: text/html");
-                        out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
-                        out.println("pragma: no-cache");
-                        String content = "{\"error\":true,\"code\":4,\"text\":\"Error registration new session\"}";
-                        out.println("Content-length: " + content.length());
-                        out.println();
-                        out.print(content);
-                        out.println();
-                    }
-                }else {
-                    out.println("HTTP/1.1 200 OK");
-                    out.println("Content-Type: text/html");
-                    out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
-                    out.println("pragma: no-cache");
-                    String content = "{\"error\":true,\"code\":3,\"text\":\"Action not exists\"}";
-                    out.println("Content-length: " + content.length());
-                    out.println();
-                    out.print(content);
-                    out.println();
-                }
-            }else {
-                out.println("HTTP/1.1 200 OK");
-                out.println("Content-Type: text/html");
-                out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
-                out.println("pragma: no-cache");
-                String content = "{\"error\":true,\"code\":2,\"text\":\"No action\"}";
-                out.println("Content-length: " + content.length());
-                out.println();
-                out.print(content);
-                out.println();
-            }
         }catch (Exception e) {
             out.println("HTTP/1.1 200 OK");
             out.println("Content-Type: text/html");
             out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
             out.println("pragma: no-cache");
             String content = "{\"error\":true,\"code\":1,\"text\":\"Error parsing json-params\"}";
+            out.println("Content-length: " + content.length());
+            out.println();
+            out.print(content);
+            out.println();
+            return;
+        }
+
+        Method req_method;
+
+        if (params.keySet().contains("action")) {
+            if ((req_method = core.get_req_method("req_"+params.get("action").toString().toLowerCase())) != null) {
+                String content;
+                try {
+                    content = (String) req_method.invoke(core, params);
+                }catch (Exception e){
+                    e.printStackTrace();
+                    content = e.toString();
+                }
+                out.println("HTTP/1.1 200 OK");
+                out.println("Content-Type: text/html");
+                out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
+                out.println("pragma: no-cache");
+                out.println("Content-length: " + content.length());
+                out.println();
+                out.print(content);
+                out.println();
+            } else {
+                out.println("HTTP/1.1 200 OK");
+                out.println("Content-Type: text/html");
+                out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
+                out.println("pragma: no-cache");
+                String content = "{\"error\":true,\"code\":3,\"text\":\"Action not exists\"}";
+                out.println("Content-length: " + content.length());
+                out.println();
+                out.print(content);
+                out.println();
+            }
+        }else {
+            out.println("HTTP/1.1 200 OK");
+            out.println("Content-Type: text/html");
+            out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
+            out.println("pragma: no-cache");
+            String content = "{\"error\":true,\"code\":2,\"text\":\"No action\"}";
             out.println("Content-length: " + content.length());
             out.println();
             out.print(content);

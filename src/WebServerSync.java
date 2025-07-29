@@ -1,0 +1,246 @@
+import java.io.*;
+import java.lang.reflect.Method;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import org.json.*;
+
+
+
+
+public class WebServerSync {
+
+    public CorePlatform core = null;
+    public Integer httpPort = 80;
+    public String  webDir = "./www";
+
+    public void run(CorePlatform core) {
+
+        setCore(core);
+
+        try {
+            ServerSocket serverSocket = new ServerSocket(httpPort);
+            System.out.println("Server is listening on port " + httpPort);
+
+            while (true) {
+                if (core != null) {
+                    core.backgroundProcessing();
+                }
+
+                Socket clientSocket = serverSocket.accept();
+                handleClientRequest(clientSocket);
+            }
+        }catch (Exception e){
+            System.out.println(e);
+        }
+    }
+
+    // Привязываем объект ядра к объекту веб-сервера
+    private boolean setCore(CorePlatform core){
+        this.core = core;
+
+        return true;
+    }
+
+    private void handleClientRequest(Socket clientSocket) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+        OutputStream outStream = clientSocket.getOutputStream();
+
+        String requestLine = in.readLine();
+//        System.out.println("Received request: " + requestLine);
+        String requestLineDecode = "";
+
+        try {
+            requestLineDecode = java.net.URLDecoder.decode(requestLine, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            requestLineDecode = "";
+        }
+
+        String[] requestParts = requestLineDecode.split(" ");
+        String   method       = requestParts[0];
+        String   path         = requestParts[1];
+        String[] tmp          = path.split("\\{");
+        String   getFile      = tmp[0];
+        String   params       = "";
+
+        if (tmp.length > 1) {
+            params = path.substring(getFile.length());
+        }
+
+        if ((getFile.length() - params.length()) > 0) {
+            getFile = getFile.substring(0);
+        }
+
+        if (getFile.equals("/")) {
+            getFile = "/index.html";
+        }
+
+//        System.out.println("getFile = "+getFile+"\nparams"+params+", file from "+webDir+getFile);
+
+        if (params.length() > 1) {
+            handleParamsRequest(params, out);
+        } else if (method.equals("GET")) {
+            handleGetRequest(path,webDir+getFile, out, outStream);
+        } else if (method.equals("POST")) {
+            handlePostRequest(in, out);
+        }
+
+        in.close();
+        out.close();
+        clientSocket.close();
+    }
+
+    private void handleGetRequest(String webPath, String severPath, PrintWriter out, OutputStream outStream) {
+        // Handle GET request
+
+        File f = new File(severPath);
+        if(!f.exists() || f.isDirectory()) {
+            out.println("HTTP/1.1 404 NOT FOUND");
+            out.println("Content-Type: text/html");
+            out.println();
+            out.println("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Error</title></head><body><pre>Cannot GET "+webPath+"</pre></body></html>");
+            return;
+        }
+
+        try {
+            InputStream inputStream = new FileInputStream(severPath);
+
+            out.println("HTTP/1.1 200 OK");
+
+            if (Arrays.asList("htm", "html", "js", "css", "txt").contains(getFileExtension(severPath))) {
+                out.println("Content-Type: text/html");
+            } else {
+                out.println("Accept-ranges: bytes");
+            }
+
+            File file = new java.io.File(severPath);
+
+            out.println("Content-length: "+file.length());
+            out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
+            out.println("pragma: no-cache");
+
+            out.println();
+
+            int data;
+            byte[] chunk = new byte[8192];
+
+            while ((data = inputStream.read(chunk)) != -1) {
+                outStream.write(chunk);
+            }
+            out.println();
+            inputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            out.println("HTTP/1.1 500 Internal server error");
+            out.println("Content-Type: text/html");
+            out.println();
+            out.println("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Error</title></head><body><pre>Cannot GET "+webPath+"</pre></body></html>");
+        }
+    }
+
+    private void handlePostRequest(BufferedReader in, PrintWriter out) throws IOException {
+        // Handle POST request
+//        StringBuilder body = new StringBuilder();
+//        String line;
+//        while ((line = in.readLine()) != null && !line.isEmpty()) {
+//            body.append(line).append("\n");
+//        }
+//
+//        out.println("HTTP/1.1 200 OK");
+//        out.println("Content-Type: text/html");
+//        out.println();
+//        out.println("<html><body><h1>POST request received</h1><pre>" + body.toString() + "</pre></body></html>");
+    }
+
+    private void handleParamsRequest(String sParams, PrintWriter out) throws IOException {
+
+        try {
+            JSONObject params = new JSONObject(sParams);
+            System.out.println(params);
+
+            if (params.keySet().contains("action")) {
+                if (core.req_exists("req_"+params.get("action").toString().toLowerCase())) {
+//                    System.out.println("Action: "+params.get("action").toString().toLowerCase()+" exists");
+                    Integer usessid = core.addNewUserSession();
+                    if (usessid >= 0) {
+                        JSONObject jResp = new JSONObject();
+                        jResp.put("error", false);
+                        jResp.put("action", params.get("action").toString().toLowerCase());
+                        jResp.put("usessid", usessid);
+                        String content = jResp.toString();
+                        out.println("HTTP/1.1 200 OK");
+                        out.println("Content-Type: text/html");
+                        out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
+                        out.println("pragma: no-cache");
+                        out.println("Content-length: " + content.length());
+                        out.println();
+                        out.print(content);
+                        out.println();
+                    }else {
+                        out.println("HTTP/1.1 500 Internal server error");
+                        out.println("Content-Type: text/html");
+                        out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
+                        out.println("pragma: no-cache");
+                        String content = "{\"error\":true,\"code\":4,\"text\":\"Error registration new session\"}";
+                        out.println("Content-length: " + content.length());
+                        out.println();
+                        out.print(content);
+                        out.println();
+                    }
+                }else {
+                    out.println("HTTP/1.1 200 OK");
+                    out.println("Content-Type: text/html");
+                    out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
+                    out.println("pragma: no-cache");
+                    String content = "{\"error\":true,\"code\":3,\"text\":\"Action not exists\"}";
+                    out.println("Content-length: " + content.length());
+                    out.println();
+                    out.print(content);
+                    out.println();
+                }
+            }else {
+                out.println("HTTP/1.1 200 OK");
+                out.println("Content-Type: text/html");
+                out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
+                out.println("pragma: no-cache");
+                String content = "{\"error\":true,\"code\":2,\"text\":\"No action\"}";
+                out.println("Content-length: " + content.length());
+                out.println();
+                out.print(content);
+                out.println();
+            }
+        }catch (Exception e) {
+            out.println("HTTP/1.1 200 OK");
+            out.println("Content-Type: text/html");
+            out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
+            out.println("pragma: no-cache");
+            String content = "{\"error\":true,\"code\":1,\"text\":\"Error parsing json-params\"}";
+            out.println("Content-length: " + content.length());
+            out.println();
+            out.print(content);
+            out.println();
+        }
+    }
+
+    private void responseFromRequest(PrintWriter out) throws IOException {
+
+        out.println("HTTP/1.1 200 OK");
+        out.println("Content-Type: text/html");
+        out.println();
+        out.println("<html><body><h1>Response...</h1></body></html>");
+    }
+
+    private String getFileExtension(String fullName){
+        String extension = "";
+
+        int i = fullName.lastIndexOf('.');
+        int p = Math.max(fullName.lastIndexOf('/'), fullName.lastIndexOf('\\'));
+
+        if (i > p) {
+            extension = fullName.substring(i+1);
+        }
+
+        return extension;
+    }
+}

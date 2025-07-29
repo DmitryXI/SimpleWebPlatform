@@ -46,18 +46,13 @@ window.onload = function() {
 
 
 
-
-
-
-
-
-
 // Функции (пока бессистемно здесь...)
 
 // Регистрация клиента на сервере
 function clientRegister(){
     // Отправляем синхронный запрос и ждём ответ. Без регистрации клиенту больше делать нечего.
-    regAnswer = getFromUrl("GET", window.CPJ.basePath+'{"action":"registration"}', false, null, webRequestError, null, null, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, null, true)
+//    regAnswer = getFromUrl("GET", window.CPJ.basePath+'{"action":"registration"}', false, null, webRequestError, null, null, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, null, true)
+    regAnswer = getFromUrl("POST", window.CPJ.basePath, false, null, webRequestError, null, {"action":"registration"}, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, null, true)
     if(regAnswer !== false){
         regAnswer = JSON.parse(regAnswer.responseText.replaceAll("\r","").replaceAll("\n","").replaceAll("\t",""))
         if(regAnswer.error !== true){
@@ -85,7 +80,7 @@ function clientRegister(){
                 testBtn.id      = "testBtn"
                 testBtn.type    = "button"
                 testBtn.value   = " Test async request! "
-                testBtn.addEventListener('click', () => getFromUrl("GET", window.CPJ.basePath+'{"action":"registration"}', true, null, webRequestError, null, null, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, null, true));
+                testBtn.addEventListener('click', () => getFromUrl("GET", window.CPJ.basePath+'{"action":"registration"}', true, testAsyncReceive, webRequestError, null, null, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, "Test async...", true));
 
                 body.appendChild(newGameBtn)
                 body.appendChild(selectGameBtn)
@@ -98,6 +93,16 @@ function clientRegister(){
 }
 
 // Функция обработки стандартных ошибок коммуникации с веб-сервером
+
+
+function testAsyncReceive(client, isError, transitStr){
+    if(isError){
+        alert("Error receive answer for: "+transitStr+"\n\n"+client.responseText)
+    }else{
+        alert("Received answer for: "+transitStr+"\n\n"+client.responseText.replaceAll("\r","").replaceAll("\n","").replaceAll("\t",""))
+    }
+}
+
 // client - XMLHttpRequest-коннектор, isError - есть ли ошибки в процессе, transitStr - объект переданный для транзита при запросе
 function webRequestError(client, isError, transitStr){
     if(window.CPJ.debugLevel > 1){

@@ -141,23 +141,35 @@ public class WebServerSync {
 
     private void handlePostRequest(BufferedReader in, PrintWriter out) throws IOException {
         // Handle POST request
-//        StringBuilder body = new StringBuilder();
-//        String line;
-//        while ((line = in.readLine()) != null && !line.isEmpty()) {
-//            body.append(line).append("\n");
-//        }
-//
-//        out.println("HTTP/1.1 200 OK");
-//        out.println("Content-Type: text/html");
-//        out.println();
-//        out.println("<html><body><h1>POST request received</h1><pre>" + body.toString() + "</pre></body></html>");
-//
+
+        StringBuilder header = new StringBuilder();
+        StringBuilder body   = new StringBuilder();
+        String line;
+        char[] c = new char[1048576];
+        while ((line = in.readLine()) != null && !line.isEmpty()) {
+            header.append(line).append("\n");
+        }
+
+        int len = in.read(c);
+        if (len > 2) {
+            body.append(c, 0, len);
+            handleParamsRequest(body.toString(), out);
+            return;
+        }
+
+
+        out.println("HTTP/1.1 200 OK");
+        out.println("Content-Type: text/html");
+        out.println();
+        out.println("<html><body><h1>POST request received</h1><pre>" + header.toString() + "</pre></body></html>");
+
     }
 
     private void handleParamsRequest(String sParams, PrintWriter out) throws IOException {
 
         try {
             JSONObject params = new JSONObject(sParams);
+
             System.out.println(params);
 
             if (params.keySet().contains("action")) {

@@ -151,6 +151,7 @@ public class WebServerSync {
 //        out.println("Content-Type: text/html");
 //        out.println();
 //        out.println("<html><body><h1>POST request received</h1><pre>" + body.toString() + "</pre></body></html>");
+//
     }
 
     private void handleParamsRequest(String sParams, PrintWriter out) throws IOException {

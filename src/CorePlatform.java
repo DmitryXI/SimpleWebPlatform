@@ -1,4 +1,5 @@
 import netscape.javascript.JSObject;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.lang.reflect.Method;
@@ -10,7 +11,6 @@ import java.sql.Timestamp;
 public class CorePlatform {
 
     private Random rnd = new Random();                                                          // Рандомайзер
-//    private ArrayList<String> coreMethodsNames = new ArrayList<>();                             // Список методов доступных для вызова запросом от клиента
     private HashMap<String, Method> coreMethodsNames = new HashMap<>();                         // Список методов доступных для вызова запросом от клиента
     private HashMap<String, HashMap<String, Object>> userSessions = new HashMap<>();            // Список сесий пользователей
     private Integer usessUUIDLen = 12;                                                          // Длина идентификатора сессии пользователя в символах
@@ -21,7 +21,6 @@ public class CorePlatform {
 
         for (Method method : methods){
             if (method.getName().substring(0,4).equals("req_")) {
-//                coreMethodsNames.add(method.getName());
                 coreMethodsNames.put(method.getName().toLowerCase(), method);
                 System.out.println("Method "+method.getName()+" listed from core");
             }
@@ -30,8 +29,17 @@ public class CorePlatform {
 
     // Запрос формы входа/аутентификации
     public String req_getEntranceForm(JSONObject request){
+        JSONObject form = new JSONObject();
 
-        return "{}";
+        form.putOnce("for", "req_getSelectGame");
+        form.putOnce("expected", (new JSONArray()).put("usessid").put("login"));
+
+        JSONArray elements = new JSONArray();
+        elements.put((new JSONObject()).putOnce("id","core_login").putOnce("type","text").putOnce("value","Login"));
+        elements.put((new JSONObject()).putOnce("id","core_login_btn").putOnce("type","button").putOnce("value","Enter"));
+
+        form.putOnce("elements", elements);
+        return form.toString();
     }
 
     // Обработка запроса регистрации нового клиента
@@ -51,9 +59,7 @@ public class CorePlatform {
         if (coreMethodsNames.containsKey(name.toLowerCase())) {
             return true;
         }
-//        if (coreMethodsNames.contains(name)) {
-//            return true;
-//        }
+
         return false;
     }
 

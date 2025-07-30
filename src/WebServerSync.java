@@ -70,6 +70,10 @@ public class WebServerSync {
 
         if ((getFile.length() - params.length()) > 0) {
             getFile = getFile.substring(0);
+            tmp     = getFile.split("\\?");
+            if (tmp.length > 1) {
+                getFile = tmp[0];
+            }
         }
 
         if (getFile.equals("/")) {
@@ -193,6 +197,8 @@ public class WebServerSync {
                 String content;
                 try {
                     content = (String) req_method.invoke(core, params);
+System.out.println("content = "+content);
+System.out.println("content length = "+content.length());
                 }catch (Exception e){
                     e.printStackTrace();
                     content = e.toString();
@@ -203,8 +209,7 @@ public class WebServerSync {
                 out.println("pragma: no-cache");
                 out.println("Content-length: " + content.length());
                 out.println();
-                out.print(content);
-                out.println();
+                out.println(content);
             } else {
                 out.println("HTTP/1.1 200 OK");
                 out.println("Content-Type: text/html");

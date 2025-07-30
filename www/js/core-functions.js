@@ -16,6 +16,16 @@ function clientRegister(){
                 }
                 $("#body").innerHTML = ""
 
+                let el     = document.createElement("script");
+                el.type    = "text/javascript";
+                el.charset ="UTF-8"
+                el.id      = "core_entrance"
+//                el.src     = window.CPJ.basePath+"js/entrance.js"
+                el.text = (getFromUrl("GET", window.CPJ.basePath+"js/entrance.js", false, null, webRequestError, null, null, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, null, true)).responseText
+                document.getElementsByTagName('head')[0].appendChild(el);
+
+
+
                 let newGameBtn     = document.createElement("input")
                 newGameBtn.id      = "newGameBtn"
                 newGameBtn.type    = "button"
@@ -34,9 +44,16 @@ function clientRegister(){
                 testBtn.value   = " Test async request! "
                 testBtn.addEventListener('click', () => getFromUrl("GET", window.CPJ.basePath+'{"action":"registration"}', true, testAsyncReceive, webRequestError, null, null, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, "Test async...", true));
 
+                let testBtn2     = document.createElement("input")
+                testBtn2.id      = "testBtn"
+                testBtn2.type    = "button"
+                testBtn2.value   = " Get login form "
+                testBtn2.addEventListener('click', () => getFromUrl("POST", window.CPJ.basePath, false, showEntranceForm, null, null, {"action":"getEntranceForm","usessid":window.CPJ.usessid}, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, null, true));
+
                 body.appendChild(newGameBtn)
                 body.appendChild(selectGameBtn)
                 body.appendChild(testBtn)
+                body.appendChild(testBtn2)
             }
         }else{
             alert("Какая-то ошибка при регистрации пользователя")
@@ -45,7 +62,6 @@ function clientRegister(){
 }
 
 // Функция обработки стандартных ошибок коммуникации с веб-сервером
-
 
 function testAsyncReceive(client, isError, transitStr){
     if(isError){

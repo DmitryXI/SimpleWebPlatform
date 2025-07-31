@@ -27,11 +27,22 @@ public class CorePlatform {
         }
     }
 
+    // Запрос формы выбора игры
+    public String req_getSelectGameForm(JSONObject request){
+        HashMap usess = getUserSessionById((String) request.get("usessid"));
+        if (request != null) {
+            usess.put("name", request.get("login"));
+            return "{\"error\":true,\"code\":5,\"text\":\"Success\"}";
+        }else {
+            return "{\"error\":true,\"code\":5,\"text\":\"Error\"}";
+        }
+    }
+
     // Запрос формы входа/аутентификации
     public String req_getEntranceForm(JSONObject request){
         JSONObject form = new JSONObject();
 
-        form.putOnce("for", "req_getSelectGame");
+        form.putOnce("for", "getSelectGameForm");
         form.putOnce("expected", (new JSONArray()).put("usessid").put("login"));
 
         JSONArray elements = new JSONArray();
@@ -81,6 +92,16 @@ public class CorePlatform {
         }
 
         return newUUID;
+    }
+
+    // Получить пользовательскую сессиию по ID
+    public HashMap<String, Object> getUserSessionById(String id){
+
+        if (userSessions.containsKey(id)) {
+            return userSessions.get(id);
+        }else {
+            return null;
+        }
     }
 
     // Создание новой пользовательской сессии

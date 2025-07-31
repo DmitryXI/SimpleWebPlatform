@@ -197,8 +197,8 @@ public class WebServerSync {
                 String content;
                 try {
                     content = (String) req_method.invoke(core, params);
-System.out.println("content = "+content);
-System.out.println("content length = "+content.length());
+//System.out.println("content = "+content);
+//System.out.println("content length = "+content.length());
                 }catch (Exception e){
                     e.printStackTrace();
                     content = e.toString();

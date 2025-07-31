@@ -18,7 +18,7 @@ function clientRegister(){
 
                 let el     = document.createElement("script");
                 el.type    = "text/javascript";
-                el.charset ="UTF-8"
+                el.charset = "UTF-8"
                 el.id      = "core_entrance"
 //                el.src     = window.CPJ.basePath+"js/entrance.js"
                 el.text = (getFromUrl("GET", window.CPJ.basePath+"js/entrance.js", false, null, webRequestError, null, null, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, null, true)).responseText
@@ -45,15 +45,22 @@ function clientRegister(){
                 testBtn.addEventListener('click', () => getFromUrl("GET", window.CPJ.basePath+'{"action":"registration"}', true, testAsyncReceive, webRequestError, null, null, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, "Test async...", true));
 
                 let testBtn2     = document.createElement("input")
-                testBtn2.id      = "testBtn"
+                testBtn2.id      = "testBtn2"
                 testBtn2.type    = "button"
                 testBtn2.value   = " Get login form "
-                testBtn2.addEventListener('click', () => getFromUrl("POST", window.CPJ.basePath, false, showEntranceForm, null, null, {"action":"getEntranceForm","usessid":window.CPJ.usessid}, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, null, true));
+                testBtn2.addEventListener('click', () => getFromUrl("POST", window.CPJ.basePath, false, showEntranceForm, null, null, {"action":"getEntranceForm","usessid":window.CPJ.usessid}, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, "body", true));
+
+                let testBtn3     = document.createElement("input")
+                testBtn3.id      = "testBtn3"
+                testBtn3.type    = "button"
+                testBtn3.value   = " Show port size "
+                testBtn3.addEventListener('click', () => { console.log("Viewport: "+viewport().width+"x"+viewport().height); })
 
                 body.appendChild(newGameBtn)
                 body.appendChild(selectGameBtn)
                 body.appendChild(testBtn)
                 body.appendChild(testBtn2)
+                body.appendChild(testBtn3)
             }
         }else{
             alert("Какая-то ошибка при регистрации пользователя")
@@ -194,9 +201,29 @@ function getFromUrl(proto, url, nowait, onready, onerror, onabort, postParams, r
         }
 }
 
+function getElFromHTML(elId, srcHTML){
+    let tDiv = document.createElement("div")
+    tDiv.style.visibility = "none"
+    document.body.appendChild(tDiv)
+    tDiv.innerHTML += srcHTML
+    let el = $("#"+elId)
+    tDiv.innerHTML = ""
+
+    return el
+}
+
 function $(str){
     if (str.charAt(0) === "#") {
                 return document.getElementById(str.slice(1))
     }
     return false
+}
+
+function viewport() {
+    var e = window, a = 'inner';
+    if (!('innerWidth' in window )) {
+        a = 'client';
+        e = document.documentElement || document.body;
+    }
+    return { width : e[ a+'Width' ] , height : e[ a+'Height' ] };
 }

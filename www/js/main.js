@@ -33,6 +33,8 @@ window.onload = function() {
     tmpBtn.value = " ReReg "
     tmpBtn.onclick = clientRegister
     body.appendChild(tmpBtn)
+
+    clientRegister()                                        // Выполняем регистрацию клиента
 }
 
 

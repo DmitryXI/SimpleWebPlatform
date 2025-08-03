@@ -31,7 +31,9 @@ public class WebServerSync {
                 handleClientRequest(clientSocket);
             }
         }catch (Exception e){
+            System.err.println("Шибка создания серверного сокета");
             System.out.println(e);
+            e.printStackTrace();
         }
     }
 
@@ -49,45 +51,50 @@ public class WebServerSync {
 
         String requestLine = in.readLine();
 //        System.out.println("Received request: " + requestLine);
-        String requestLineDecode = "";
 
-        try {
-            requestLineDecode = java.net.URLDecoder.decode(requestLine, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            requestLineDecode = "";
-        }
+        if (requestLine != null) {
 
-        String[] requestParts = requestLineDecode.split(" ");
-        String   method       = requestParts[0];
-        String   path         = requestParts[1];
-        String[] tmp          = path.split("\\{");
-        String   getFile      = tmp[0];
-        String   params       = "";
+            String requestLineDecode = "";
 
-        if (tmp.length > 1) {
-            params = path.substring(getFile.length());
-        }
-
-        if ((getFile.length() - params.length()) > 0) {
-            getFile = getFile.substring(0);
-            tmp     = getFile.split("\\?");
-            if (tmp.length > 1) {
-                getFile = tmp[0];
+            try {
+                requestLineDecode = java.net.URLDecoder.decode(requestLine, StandardCharsets.UTF_8.name());
+            } catch (UnsupportedEncodingException e) {
+                System.err.println("Ошибка декодирования запроса клиента");
+                requestLineDecode = "";
             }
-        }
 
-        if (getFile.equals("/")) {
-            getFile = "/index.html";
-        }
+            String[] requestParts = requestLineDecode.split(" ");
+            String method = requestParts[0];
+            String path = requestParts[1];
+            String[] tmp = path.split("\\{");
+            String getFile = tmp[0];
+            String params = "";
+
+            if (tmp.length > 1) {
+                params = path.substring(getFile.length());
+            }
+
+            if ((getFile.length() - params.length()) > 0) {
+                getFile = getFile.substring(0);
+                tmp = getFile.split("\\?");
+                if (tmp.length > 1) {
+                    getFile = tmp[0];
+                }
+            }
+
+            if (getFile.equals("/")) {
+                getFile = "/index.html";
+            }
 
 //        System.out.println("getFile = "+getFile+"\nparams"+params+", file from "+webDir+getFile);
 
-        if (params.length() > 1) {
-            handleParamsRequest(params, out);
-        } else if (method.equals("GET")) {
-            handleGetRequest(path,webDir+getFile, out, outStream);
-        } else if (method.equals("POST")) {
-            handlePostRequest(in, out);
+            if (params.length() > 1) {
+                handleParamsRequest(params, out);
+            } else if (method.equals("GET")) {
+                handleGetRequest(path, webDir + getFile, out, outStream);
+            } else if (method.equals("POST")) {
+                handlePostRequest(in, out);
+            }
         }
 
         in.close();
@@ -135,6 +142,7 @@ public class WebServerSync {
             out.println();
             inputStream.close();
         } catch (IOException e) {
+            System.err.println("Ошибка чтения файла: "+severPath);
             e.printStackTrace();
             out.println("HTTP/1.1 500 Internal server error");
             out.println("Content-Type: text/html");
@@ -178,12 +186,13 @@ public class WebServerSync {
 
             System.out.println(params);
         }catch (Exception e) {
+            System.err.println("Ошибка разбора строки в JSON: "+sParams);
             out.println("HTTP/1.1 200 OK");
             out.println("Content-Type: text/html");
             out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
             out.println("pragma: no-cache");
             String content = "{\"error\":true,\"code\":1,\"text\":\"Error parsing json-params\"}";
-            out.println("Content-length: " + content.length());
+            out.println("Content-length: " + content.getBytes().length);
             out.println();
             out.print(content);
             out.println();
@@ -191,6 +200,9 @@ public class WebServerSync {
         }
 
         Method req_method;
+        if (params.keySet().contains("usessid")) {
+            core.refreshUserSession(params.get("usessid").toString());
+        }
 
         if (params.keySet().contains("action")) {
             if ((req_method = core.get_req_method("req_"+params.get("action").toString().toLowerCase())) != null) {
@@ -199,7 +211,9 @@ public class WebServerSync {
                     content = (String) req_method.invoke(core, params);
 //System.out.println("content = "+content);
 //System.out.println("content length = "+content.length());
+//System.out.println("content byte length = "+content.getBytes().length);
                 }catch (Exception e){
+                    System.err.println("Ошибка вызова метода: "+"req_"+params.get("action").toString().toLowerCase());
                     e.printStackTrace();
                     content = e.toString();
                 }
@@ -207,7 +221,7 @@ public class WebServerSync {
                 out.println("Content-Type: text/html");
                 out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
                 out.println("pragma: no-cache");
-                out.println("Content-length: " + content.length());
+                out.println("Content-length: " + content.getBytes().length);
                 out.println();
                 out.println(content);
             } else {
@@ -216,7 +230,7 @@ public class WebServerSync {
                 out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
                 out.println("pragma: no-cache");
                 String content = "{\"error\":true,\"code\":3,\"text\":\"Action not exists\"}";
-                out.println("Content-length: " + content.length());
+                out.println("Content-length: " + content.getBytes().length);
                 out.println();
                 out.print(content);
                 out.println();
@@ -227,7 +241,7 @@ public class WebServerSync {
             out.println("Cache-control: no-store, no-cache, must-revalidate, max-age=0");
             out.println("pragma: no-cache");
             String content = "{\"error\":true,\"code\":2,\"text\":\"No action\"}";
-            out.println("Content-length: " + content.length());
+            out.println("Content-length: " + content.getBytes().length);
             out.println();
             out.print(content);
             out.println();

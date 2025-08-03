@@ -16,14 +16,15 @@ function clientRegister(){
                 }
                 $("#body").innerHTML = ""
 
-                let el     = document.createElement("script");
-                el.type    = "text/javascript";
-                el.charset = "UTF-8"
-                el.id      = "core_entrance"
-//                el.src     = window.CPJ.basePath+"js/entrance.js"
-                el.text = (getFromUrl("GET", window.CPJ.basePath+"js/entrance.js", false, null, webRequestError, null, null, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, null, true)).responseText
-                document.getElementsByTagName('head')[0].appendChild(el);
+                if(!loadScript("core_entrance", window.CPJ.basePath+"js/entrance.js")){
+                    console.log("Error loading script \"core_entrance\"")
+                    return
+                }
 
+                if(!loadScript("core_selectGame", window.CPJ.basePath+"js/selectGame.js")){
+                    console.log("Error loading script \"core_selectGame\"")
+                    return
+                }
 
 
                 let newGameBtn     = document.createElement("input")
@@ -207,7 +208,7 @@ function getElFromHTML(elId, srcHTML){
     document.body.appendChild(tDiv)
     tDiv.innerHTML += srcHTML
     let el = $("#"+elId)
-    tDiv.innerHTML = ""
+    tDiv.remove()
 
     return el
 }
@@ -226,4 +227,25 @@ function viewport() {
         e = document.documentElement || document.body;
     }
     return { width : e[ a+'Width' ] , height : e[ a+'Height' ] };
+}
+
+function loadScript(scriptId, fullName){
+
+    let el = $("#"+scriptId)
+
+    if(el === null){
+        el     = document.createElement("script");
+        el.type    = "text/javascript";
+        el.charset = "UTF-8"
+        el.id      = scriptId
+    }
+    //                el.src     = window.CPJ.basePath+"js/entrance.js"
+    let connector = (getFromUrl("GET", fullName, false, null, webRequestError, null, null, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, null, true))
+    if (connector instanceof XMLHttpRequest) {
+        el.text = connector.responseText
+        document.getElementsByTagName('head')[0].appendChild(el);
+        return true
+    }else{
+        return false
+    }
 }

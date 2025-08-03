@@ -1,7 +1,7 @@
-// Отображение формы выбора игры
+// Отображение формы выбора игровой сессии
 // Если создание формы: client - XMLHttpRequest, isError - флаг наличие ошибки при выполнении запроса, transitStr - строка - id элемента в документе, куда форму вставить
 // Если обновление формы: client - строка "refresh", isError - id формы входа
-function showSelectGameForm(client, isError, transitStr){
+function showSelectGameSessionForm(client, isError, transitStr){
 
     let formId = "unknown"
     let lastFormId = "unknown"
@@ -49,31 +49,10 @@ function showSelectGameForm(client, isError, transitStr){
 
     // Если готовой формы нет, создаём новую
     if(form === null){
-        let srcFormHtml = getFromUrl("GET", window.CPJ.basePath+"forms/selectGameForm.html", false, null, null, null, null, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, null, true)
+        let srcFormHtml = getFromUrl("GET", window.CPJ.basePath+"forms/selectGameSessionForm.html", false, null, null, null, null, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, null, true)
         if(srcFormHtml !== false){
-//            console.log(srcFormHtml.responseText)
             let formHtml = srcFormHtml.responseText.replaceAll("${id}", formId).replaceAll("${z}", 1)
-//            console.log(formHtml)
             form = getElFromHTML(formId, formHtml)
-            item = cutElFromElement("#"+formId+"_item_", form)
-//            console.log(item)
-//            console.log(form)
-            let keys = Object.keys(answer.games)
-            console.log(keys)
-
-            if(keys.length > 0){
-
-                let cItem
-                for(num in keys){
-//                    console.log(keys[num])
-//                    console.log(answer.games[keys[num]])
-                    cItem = item.cloneNode(item)
-                    cItem.id = item.id+"_"+keys[num]
-                    cItem.addEventListener('click', () => {getFromUrl("POST", window.CPJ.basePath, false, showSelectGameSessionForm, null, null, {"action":answer.for,"usessid":window.CPJ.usessid,"gameId":keys[num]}, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, "body:"+formId, true)});
-                    cItem.innerHTML = answer.games[keys[num]].name
-                    form.appendChild(cItem)
-                }
-            }
         }
     }
 
@@ -87,6 +66,6 @@ function showSelectGameForm(client, isError, transitStr){
 
     if(client !== "refresh"){
         document.body.appendChild(form)
-        window.CPJ.activeForms[formId] = {"function":"showSelectGameForm", "params":["refresh"]}
+        window.CPJ.activeForms[formId] = {"function":"showSelectGameSessionForm", "params":["refresh"]}
     }
 }

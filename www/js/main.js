@@ -4,7 +4,8 @@ window.CPJ = {
         "basePath"   :null,      // Базовый URL
         "currentUser":"notUse",  // Информация о текущем пользователе (в том или мном формате)
         "connectors" :{},        // Массив активных XMLHttpRequest-коннекторов
-        "usessid"    :-1         // Идентификатор сессии пользователя
+        "usessid"    :-1,        // Идентификатор сессии пользователя
+        "activeForms": {}        // Список активных форм на случай изменения размеров окна
 }
 
 let tail = document.location.pathname.split("/")
@@ -37,6 +38,9 @@ window.onload = function() {
     clientRegister()                                        // Выполняем регистрацию клиента
 }
 
+window.onresize = function(){
+    refreshForms()
+}
 
 
 

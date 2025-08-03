@@ -103,7 +103,7 @@ public class CorePlatform {
                 form.putOnce("expected", (new JSONArray()).put("usessid").put("gameId"));
 
                 for (Object gameKey : gamesKeys){
-                    gamesJSON.putOnce((String) gameKey, (new JSONObject()).putOnce("gId", gamesList.get(gameKey).get("gId")).putOnce("name", gamesList.get(gameKey).get("name")).toString());
+                    gamesJSON.putOnce((String) gameKey, (new JSONObject()).putOnce("gId", gamesList.get(gameKey).get("gId")).putOnce("name", gamesList.get(gameKey).get("name")));
                     System.out.println("Game in list: "+gamesList.get(gameKey).get("name") + "("+gamesList.get(gameKey).get("gId")+")");
                 }
 

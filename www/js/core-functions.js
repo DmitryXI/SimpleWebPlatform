@@ -3,7 +3,6 @@
 // Регистрация клиента на сервере
 function clientRegister(){
     // Отправляем синхронный запрос и ждём ответ. Без регистрации клиенту больше делать нечего.
-//    regAnswer = getFromUrl("GET", window.CPJ.basePath+'{"action":"registration"}', false, null, webRequestError, null, null, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, null, true)
     regAnswer = getFromUrl("POST", window.CPJ.basePath, false, null, webRequestError, null, {"action":"registration"}, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, null, true)
     if(regAnswer !== false){
         regAnswer = JSON.parse(regAnswer.responseText.replaceAll("\r","").replaceAll("\n","").replaceAll("\t",""))
@@ -16,16 +15,19 @@ function clientRegister(){
                 }
                 $("#body").innerHTML = ""
 
+                // Динамически подгружаем скрипты
                 if(!loadScript("core_entrance", window.CPJ.basePath+"js/entrance.js")){
                     console.log("Error loading script \"core_entrance\"")
                     return
                 }
-
                 if(!loadScript("core_selectGame", window.CPJ.basePath+"js/selectGame.js")){
                     console.log("Error loading script \"core_selectGame\"")
                     return
                 }
-
+                if(!loadScript("core_selectGameSession", window.CPJ.basePath+"js/selectGameSession.js")){
+                    console.log("Error loading script \"core_selectGameSession\"")
+                    return
+                }
 
                 let newGameBtn     = document.createElement("input")
                 newGameBtn.id      = "newGameBtn"
@@ -213,6 +215,20 @@ function getElFromHTML(elId, srcHTML){
     return el
 }
 
+function cutElFromElement(elId, parentEl){
+
+    let el = parentEl.querySelector(elId)
+
+    if(el !== null){
+        let clone = el.cloneNode(true)
+        el.remove()
+
+        return clone
+    }else{
+        return false
+    }
+}
+
 function $(str){
     if (str.charAt(0) === "#") {
                 return document.getElementById(str.slice(1))
@@ -248,4 +264,14 @@ function loadScript(scriptId, fullName){
     }else{
         return false
     }
+}
+
+// Изменение размеров активных форм
+function refreshForms(){
+
+    for(let formId in window.CPJ.activeForms){
+//        console.log("Call function "+window.CPJ.activeForms[formId].function+" with params "+window.CPJ.activeForms[formId].params+", "+formId)
+        window[window.CPJ.activeForms[formId].function](...window.CPJ.activeForms[formId].params, formId)
+    }
+
 }

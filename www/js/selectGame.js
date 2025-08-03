@@ -62,14 +62,13 @@ function showSelectGameForm(client, isError, transitStr){
             console.log(keys)
 
             if(keys.length > 0){
-
-                let cItem
                 for(num in keys){
 //                    console.log(keys[num])
 //                    console.log(answer.games[keys[num]])
-                    cItem = item.cloneNode(item)
+                    let cKey = keys[num]
+                    let cItem = item.cloneNode(item)
                     cItem.id = item.id+"_"+keys[num]
-                    cItem.addEventListener('click', () => {getFromUrl("POST", window.CPJ.basePath, false, showSelectGameSessionForm, null, null, {"action":answer.for,"usessid":window.CPJ.usessid,"gameId":keys[num]}, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, "body:"+formId, true)});
+                    cItem.addEventListener('click', () => {getFromUrl("POST", window.CPJ.basePath, false, showSelectGameSessionForm, null, null, {"action":answer.for,"usessid":window.CPJ.usessid,"gameId":cKey}, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, "body:"+formId, true)});
                     cItem.innerHTML = answer.games[keys[num]].name
                     form.appendChild(cItem)
                 }

@@ -1,10 +1,8 @@
-import netscape.javascript.JSObject;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.lang.reflect.Method;
 import java.util.*;
-import java.sql.Timestamp;
 //import games.*;
 
 
@@ -13,7 +11,8 @@ public class CorePlatform {
 
     private Random rnd = new Random();                                                          // Рандомайзер
     private HashMap<String, Method> coreMethodsNames = new HashMap<>();                         // Список методов доступных для вызова запросом от клиента
-    private HashMap<String, HashMap<String, Object>> userSessions = new HashMap<>();            // Список сессий пользователей
+    private HashMap<String, HashMap<String, Object>> usersSessions = new HashMap<>();           // Список сессий пользователей
+    private HashMap<String, HashMap<String, Object>> gamesSessions = new HashMap<>();           // Список игровых сессий
     private Integer usessUUIDLen = 12;                                                          // Длина идентификатора сессии пользователя в символах
     private String UUIDChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";                          // Набор символов для генерации UUID'ов
     private Integer userSessionTimeToLive = 600;                                                // Время жизни сессии пользователя в секундах
@@ -73,12 +72,61 @@ public class CorePlatform {
         return true;
     }
 
+    // Запрос запуска игровой сессии
+    public String req_runGame(JSONObject request){
+
+        HashMap usess;
+        String skippedExpected;
+
+        // Проверяем наличие ожидаемых полей
+        if (!(skippedExpected = checkExpectedFields(request, new String[]{"action","usessid","gameId","joinType"})).equals("")) { return "{\"error\":true,\"code\":12,\"text\":\"Not set expected field "+skippedExpected+"\"}"; }
+        // Проверяем регистрацию сессии пользователя (на этом этапе уже должна быть)
+        if ((usess = getUserSessionById((String) request.get("usessid"))) == null) { return "{\"error\":true,\"code\":11,\"text\":\"User session not registered\"}"; }
+
+        HashMap<String, Object> gameSession;
+
+        if (request.get("joinType").equals("new")) {
+            gameSession = addNewGameSession((String) request.get("gameId"));
+        }else{
+            // Not ready yet...
+        }
+
+        if (gameSession == null) { return "{\"error\":true,\"code\":13,\"text\":\"Game session not registered\"}"; }
+
+
+        // Implementation here...
+
+        return "{\"error\":true,\"code\":0,\"text\":\"Debug...\"}";
+    }
+
+    // Запрос формы выбора игровой сессии
+    public String req_getGameSessionForm(JSONObject request){
+
+        HashMap usess;
+        String skippedExpected;
+
+        // Проверяем наличие ожидаемых полей
+        if (!(skippedExpected = checkExpectedFields(request, new String[]{"action","usessid","gameId"})).equals("")) { return "{\"error\":true,\"code\":12,\"text\":\"Not set expected field "+skippedExpected+"\"}"; }
+        // Проверяем регистрацию сессии пользователя (на этом этапе уже должна быть)
+        if ((usess = getUserSessionById((String) request.get("usessid"))) == null) { return "{\"error\":true,\"code\":11,\"text\":\"User session not registered\"}"; }
+
+        usess.put("gId", request.get("gameId"));
+
+        JSONObject form = new JSONObject();
+        form.putOnce("formId", "slgSesFrm");
+        form.putOnce("for", "runGame");
+        form.putOnce("gameId", request.get("gameId"));
+        form.putOnce("expected", (new JSONArray()).put("usessid").put("gameId").put("joinType"));
+
+        return form.toString();
+    }
+
     // Запрос формы выбора игры
     public String req_getSelectGameForm(JSONObject request){
 
         // Проверяем регистрацию сессии пользователя (на этом этапе уже должна быть)
         if (request.keySet().contains("usessid")) {
-            if (!userSessions.containsKey(request.get("usessid"))) {
+            if (!usersSessions.containsKey(request.get("usessid"))) {
                 return "{\"error\":true,\"code\":11,\"text\":\"User session not registered\"}";
             }
         }else {
@@ -123,7 +171,7 @@ public class CorePlatform {
 
         // Проверяем регистрацию сессии пользователя (на этом этапе уже должна быть)
         if (request.keySet().contains("usessid")) {
-            if (!userSessions.containsKey(request.get("usessid"))) {
+            if (!usersSessions.containsKey(request.get("usessid"))) {
                 return "{\"error\":true,\"code\":11,\"text\":\"User session not registered\"}";
             }
         }else {
@@ -174,11 +222,26 @@ public class CorePlatform {
         return null;
     }
 
+    // Проверить наличие ожидаемых полей в запросе
+    public String checkExpectedFields(JSONObject request, String[] fields){
+
+        if (fields.length > 0) {
+            Set keys = request.keySet();
+            for (String field : fields) {
+                if (!keys.contains(field)) {
+                    return field;
+                }
+            }
+        }
+
+        return "";
+    }
+
     // Генерация нового уникального ID пользовательской сессии
     private String newUserSessionId(){
         String newUUID = generateUUID(rnd, UUIDChars, usessUUIDLen);
 
-        while (userSessions.containsKey(newUUID)){
+        while (usersSessions.containsKey(newUUID)){
             newUUID = generateUUID(rnd, UUIDChars, usessUUIDLen);
         }
 
@@ -188,8 +251,8 @@ public class CorePlatform {
     // Получить пользовательскую сессиию по ID
     public HashMap<String, Object> getUserSessionById(String id){
 
-        if (userSessions.containsKey(id)) {
-            return userSessions.get(id);
+        if (usersSessions.containsKey(id)) {
+            return usersSessions.get(id);
         }else {
             return null;
         }
@@ -198,8 +261,8 @@ public class CorePlatform {
     // Обновление пользовательской сессии
     public Boolean refreshUserSession(String id){
 
-        if (userSessions.containsKey(id)) {
-            userSessions.get(id).replace("lastTime", (Object)getCurrentTimeStamp());
+        if (usersSessions.containsKey(id)) {
+            usersSessions.get(id).replace("lastTime", (Object)getCurrentTimeStamp());
             System.out.println("Refreshed user session: "+id);
         }
 
@@ -209,10 +272,35 @@ public class CorePlatform {
     // Создание новой пользовательской сессии
     public String addNewUserSession(){
         String newSessId = newUserSessionId();
-        userSessions.put(newSessId, new HashMap<>());
-        userSessions.get(newSessId).put("lastTime", (Object)getCurrentTimeStamp());
+        usersSessions.put(newSessId, new HashMap<>());
+        usersSessions.get(newSessId).put("lastTime", (Object)getCurrentTimeStamp());
 
         return newSessId;
+    }
+
+    // Получить игровую сессиию по ID
+    public HashMap<String, Object> getGameSessionById(String id){
+
+        if (gamesSessions.containsKey(id)) {
+            return gamesSessions.get(id);
+        }else {
+            return null;
+        }
+    }
+
+    // Создание новой игровой сессии
+    public HashMap<String, Object> addNewGameSession(String gId){
+        String newSessId = newUserSessionId();
+        gamesSessions.put(newSessId, new HashMap<>());
+
+        HashMap<String, Object> gameSession = gamesSessions.get(newSessId);
+
+        gameSession.put("createTime", (Object)getCurrentTimeStamp());
+        gameSession.put("lastTime", (Object)getCurrentTimeStamp());
+        gameSession.put("gId", gId);
+        gameSession.put("players", new HashMap<>());
+
+        return gameSession;
     }
 
     // Пока под вопросом для данной механики... возможно, здесь будет выполнение фоновых внутренних задач сервера...
@@ -220,14 +308,14 @@ public class CorePlatform {
         System.out.println(java.time.LocalDateTime.now()+": platform is working");
 
         // Удаляем устаревшие сессии
-        if (userSessions.size() > 0) {
+        if (usersSessions.size() > 0) {
             Long cTime = getCurrentTimeStamp();
-            Object[] userSessionsKeys = userSessions.keySet().toArray();
+            Object[] userSessionsKeys = usersSessions.keySet().toArray();
 
             for (Object usessid : userSessionsKeys){
-                System.out.println("Exists session "+usessid+" with last time "+userSessions.get(usessid).get("lastTime")+" and current time "+cTime);
-                if ((cTime - (long)(userSessions.get(usessid).get("lastTime"))) > userSessionTimeToLive) {
-                    userSessions.remove(usessid);
+                System.out.println("Exists session "+usessid+" with last time "+ usersSessions.get(usessid).get("lastTime")+" and current time "+cTime);
+                if ((cTime - (long)(usersSessions.get(usessid).get("lastTime"))) > userSessionTimeToLive) {
+                    usersSessions.remove(usessid);
                     System.out.println("User session "+usessid+" removed from timeout");
                 }
             }

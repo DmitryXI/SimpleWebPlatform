@@ -28,6 +28,10 @@ function clientRegister(){
                     console.log("Error loading script \"core_selectGameSession\"")
                     return
                 }
+                if(!loadScript("core_runGame", window.CPJ.basePath+"js/runGame.js")){
+                    console.log("Error loading script \"core_runGame\"")
+                    return
+                }
 
                 let newGameBtn     = document.createElement("input")
                 newGameBtn.id      = "newGameBtn"

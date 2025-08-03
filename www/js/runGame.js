@@ -1,7 +1,7 @@
-// Отображение формы выбора игровой сессии
+// Отображение формы игры/запуска игры
 // Если создание формы: client - XMLHttpRequest, isError - флаг наличие ошибки при выполнении запроса, transitStr - строка - id элемента в документе, куда форму вставить
 // Если обновление формы: client - строка "refresh", isError - id формы входа
-function showSelectGameSessionForm(client, isError, transitStr){
+function runGame(client, isError, transitStr){
 
     let formId = "unknown"
     let lastFormId = "unknown"
@@ -10,7 +10,7 @@ function showSelectGameSessionForm(client, isError, transitStr){
 
     if(client !== "refresh"){
         answer = JSON.parse(client.responseText.replaceAll("\r","").replaceAll("\n","").replaceAll("\t",""))
-        console.log("Получены данные формы выбора сессии игры: ");
+        console.log("Получены данные формы запуска игры: ");
         console.log(answer)
         if(answer.error !== null){
             if(answer.error === true){
@@ -63,13 +63,4 @@ function showSelectGameSessionForm(client, isError, transitStr){
     form.style.top = h+"px"
     form.style.width = form.style.left
     form.style.height = form.style.top
-
-    let newGameBtn = form.querySelector("#"+formId+"_new_game")
-    let joinGameBtn = form.querySelector("#"+formId+"_join_game")
-
-    if(client !== "refresh"){
-        newGameBtn.addEventListener('click', () => {getFromUrl("POST", window.CPJ.basePath, false, runGame, null, null, {"action":answer.for,"usessid":window.CPJ.usessid,"gameId":answer.gameId}, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, "body:"+formId, true)});
-        document.body.appendChild(form)
-        window.CPJ.activeForms[formId] = {"function":"showSelectGameSessionForm", "params":["refresh"]}
-    }
 }

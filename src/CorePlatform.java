@@ -83,7 +83,7 @@ public class CorePlatform {
         // Проверяем регистрацию сессии пользователя (на этом этапе уже должна быть)
         if ((usess = getUserSessionById((String) request.get("usessid"))) == null) { return "{\"error\":true,\"code\":11,\"text\":\"User session not registered\"}"; }
 
-        HashMap<String, Object> gameSession;
+        HashMap<String, Object> gameSession = null;
 
         if (request.get("joinType").equals("new")) {
             gameSession = addNewGameSession((String) request.get("gameId"));

@@ -68,7 +68,7 @@ function showSelectGameSessionForm(client, isError, transitStr){
     let joinGameBtn = form.querySelector("#"+formId+"_join_game")
 
     if(client !== "refresh"){
-        newGameBtn.addEventListener('click', () => {getFromUrl("POST", window.CPJ.basePath, false, runGame, null, null, {"action":answer.for,"usessid":window.CPJ.usessid,"gameId":answer.gameId}, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, "body:"+formId, true)});
+        newGameBtn.addEventListener('click', () => {getFromUrl("POST", window.CPJ.basePath, false, runGame, null, null, {"action":answer.for,"usessid":window.CPJ.usessid,"gameId":answer.gameId,"joinType":"new"}, {"cache-control":"no-cache, no-store, must-revalidate","pragma":"no-cache","expires":"0"}, "body:"+formId, true)});
         document.body.appendChild(form)
         window.CPJ.activeForms[formId] = {"function":"showSelectGameSessionForm", "params":["refresh"]}
     }

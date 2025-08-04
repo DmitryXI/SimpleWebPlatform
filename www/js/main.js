@@ -19,6 +19,14 @@ window.CPJ.basePath = basePath          // Базовый url-путь
 window.CPJ.usesid = -1                  // Номер сессии пользователя (меньше нуля - нет активной сессии)
 
 window.onload = function() {
+    if (document.readyState == 'loading') {
+      document.addEventListener('DOMContentLoaded', work);
+    } else {
+      docReady()
+    }
+}
+
+function docReady(){
     let head = document.getElementsByTagName('head')[0]     // Получаем head документа
     let body = document.getElementById('body')              // Получаем body документа
     let favicon  = document.createElement("link");          // Создаём элемент link для favicon.ico

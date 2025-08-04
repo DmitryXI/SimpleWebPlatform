@@ -119,8 +119,10 @@ public class WebServerSync {
 
             out.println("HTTP/1.1 200 OK");
 
-            if (Arrays.asList("htm", "html", "js", "css", "txt").contains(getFileExtension(severPath))) {
+            if (Arrays.asList("htm", "html", "css", "txt", "js").contains(getFileExtension(severPath))) {
                 out.println("Content-Type: text/html");
+//            } else if (getFileExtension(severPath) == "js") {
+//                out.println("Content-Type: text/javascript");
             } else {
                 out.println("Accept-ranges: bytes");
             }

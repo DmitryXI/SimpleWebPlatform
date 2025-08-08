@@ -50,7 +50,7 @@ public class WebServerSync {
         OutputStream outStream = clientSocket.getOutputStream();
 
         String requestLine = in.readLine();
-//        System.out.println("Received request: " + requestLine);
+        System.out.println("Received request: " + requestLine);
 
         if (requestLine != null) {
 
@@ -119,10 +119,11 @@ public class WebServerSync {
 
             out.println("HTTP/1.1 200 OK");
 
-            if (Arrays.asList("htm", "html", "css", "txt", "js").contains(getFileExtension(severPath))) {
+            if (Arrays.asList("htm", "html", "css", "txt").contains(getFileExtension(severPath))) {
                 out.println("Content-Type: text/html");
-//            } else if (getFileExtension(severPath) == "js") {
-//                out.println("Content-Type: text/javascript");
+            } else if (getFileExtension(severPath).equals("js")) {
+                out.println("Content-Type: application/javascript");
+                out.println("Content-Encoding: utf-8");
             } else {
                 out.println("Accept-ranges: bytes");
             }
